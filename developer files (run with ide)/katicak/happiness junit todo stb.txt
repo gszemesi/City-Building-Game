@@ -1,0 +1,121 @@
++:
+1) rendőrség (Person::safety())
+2) stadion (Person::stadion())
+3) lakózónához minél közelebbi munkahely (Person::commute())
+4) nincs lakózónához közeli ipari zóna (Civil::industrialEffect())
+5) alacsony adó (Person::tax())
+6) erdők (Person::forest(), de nem a Cure-től :( )			  
+
+-:
+1) hitel (Mayor->Person::debt())
+2) kiegyenítetlen service - industrial arány (Mayor->Person::ratio)
+3) lakózónához közeli ipari zóna (Civil::industrialEffect())
+4) lakó zónától távoli munkahely (Person::commute())
+5) magas adó (Mayor::getTax()->Person::tax())
+6) rendőrség hiánya (Person::safety())
+
+Person::safety(), Person::stadion(), Person::commute(), Civil::industrialEffect(), Mayor->Person::tax(), Person::forest(), Mayor->Person::debt(), Mayor->Person::ratio
+=========
+| JUnit |
+=========
+
+!!! Megjegyzéslépés !!! 
+Lépés mit jelent? hány mezőt kell lépni ahhoz hogy eljussunk egy mezőhöz
+
+1. Person::safety():
+   1. home-nál van rendőrség 60% telítettség felett + felett
+   3. home-nál nincs rendőrség 60% telítettség alatt + felett
+   5. workplace-nél van rendőrség 60%  telítettség alatt + felett
+   4. workplace-nél nincs rendőrség 60% telítettség alatt + felett
+   5. mindkettőnél van 60% telítettség alatt + felett
+   6. egyiknél sincs 60% telítettség alatt + felett
+
+   Azaz 6 * 2 teszteset
+   teszteléshez segédfüggvény: Civil::setNumberOfPeople()
+
+2. Person::stadion():
+   1. nincs stadion
+   2. nincs stadion se work, se home közelében
+   3. stadion csak homenál
+   4. stadion csak workplace-nél
+
+3. Person::commute():
+   1. 2> lépésre van a háza a munkahelyétől -> +15
+   2. 3-4 lépésre van -> +10
+   3. 5-6 lépésre van -> +5
+   4. 6< lépésre van -> -15
+
+4. Civil::industrialEffect():
+  1. 2> lépésre van a lakóhelyétől ipari-> -15
+  2. 3-4 lépésre van -> -10
+  3. 5 lépésre van -> -5
+  5. 5< lépésre van -> +10
+
+5. Person::tax(): 
+  1. ha magas az adó -> -15
+  2. ha alacsony az adó -> 15
+
+6. Person::forest():
+  1. van 3 lépésnyire tőle erdő (hasForest)
+       a) nincs beépítve (canSee) -> 20
+       b) be van építve (!canSee) és az industrial -> 15
+       c) be van építve (esetleg többel is) és egyik sem industrial -> 0
+       d) be van építve több dologgal is, de az egyik industrial -> 15
+  2. nincs 3 lépésnyire tőle erdő (hasForest) -> 0
+
+7. Person::debt(): 
+ 1. Mayor::fund-ja - -> -25
+ 2. egyébként -> 0
+
+ teszteléshez segédfüggvény: setFund()
+
+Person::ratio:
+ 1. ha a különbség a service és industrial zónák között kisebb mint tíz, akkor azzal a negatív számmal térjen vissza 
+ 2. ha nincs különbség a darabszám között ->
+ 3. ha 10-nél nagyobb a különbség -> -10
+
+Civil/Service/Industrial::payTax() (mivel ugyan azt csinálja minden osztályban, ezért elég lesz az egyikben tesztelni):
+ 1. Kijelölt adózás mértékét tényleg hozzáadja a polgármester vagyonához, úgy, hogy laknak ott
+ 2. Ha nem laknak adott zónában, akkor nem változik a polgármester vagyona
+
+
+==========
+|Pontozás|
+==========
+	-------------		-----------------
+   	kb. 70%		  |	kb. 30%
+   	praktikus	  |	rekreációs
+   	-------------	  |	-----------------
+1. 	rendőrség	  |	stadion
+2. 	közeli munkahely  |	erdő
+3. 	távoli ipar       |
+4. 	alacsony adó      |
+
+Ezek külön-külön függvények lesznek, amik visszatérnek egy-egy számmal. Ezeket a Person::calculateHappinessben() fogom összegezni.
+Hogy fog 0 és 100 közé esni? - Ha ez a szám a végén negatív lesz, akkor 0-ra állítom. Ha a végére 100-at meghaladja, akkor 100%-ra állítom.
+Hogy fogjuk meghatározni egy lakózóna elégedettségét? - A Civil::people listában található emberek elégedettségét fogjuk átlagolni.
+
+============
+|Kinga ToDo|
+============
+Héten: 
+✓ Industrial/Service::payTax() -> hozzáaádni!!
+✓ GitLab-os branchbe feltölteni
+✓ elégedettség tényezői
+
+
+Mérföldkőig:
+- gameOver()
+- Person/CiviL::calulateHappiness()
+- alapból legyenek erdős terek, ne csak facsemeték
+
+Következendő hetekben:
+- demolish():: nem csak zónát fogunk tudni demolisholni, hanem ha már építve van rajtuk, akkor azokat is
+- Metropolis (?), Mikulás (?)
+
+=====================
+|Kérdések kövi órára|
+=====================
+- Van külön Civil, Industrial és Service zóna, ez ok? (demolish() miatt)
+- Bemutatni az elégedettség vizsgálatot
+- Extra komplexitás pontok: Mikulás, Katasztrófa, Nyugdíj, Metropolisz
